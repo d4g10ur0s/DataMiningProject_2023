@@ -43,21 +43,24 @@ def main():
     #4. plot population per day for each
     for i in countries :
         proc = df_dict[i]
-        dd1 = proc.loc[1:][["Deaths","Cases"]].reset_index().drop(columns="index")#daily deaths
-        dd2 = proc.loc[:len(proc.index)-1][["Deaths","Cases"]].reset_index().drop(columns="index")#daily deaths
+        dd1 = proc.loc[1:][["Deaths","Cases","Medical doctors per 1000 people","Hospital beds per 1000 people"]].reset_index().drop(columns="index")#daily deaths
+        dd2 = proc.loc[:len(proc.index)-1][["Deaths","Cases","Medical doctors per 1000 people","Hospital beds per 1000 people"]].reset_index().drop(columns="index")#daily deaths
         frames = [pd.DataFrame(data=[proc.loc[0]]), dd1-dd2]
-
         dailyDeaths = pd.concat(frames, join="inner").reset_index().drop(columns="index").loc[:len(proc.index)-1]["Deaths"]
 
         dailyCases = pd.concat(frames, join="inner").reset_index().drop(columns="index").loc[:len(proc.index)-1]["Cases"]
         dailyCases.loc[:].replace(to_replace=0.0,value=1,inplace=True)#because some days cases were 0...
 
-        plt.plot(range(len(proc.loc[:]["Date"])),dailyDeaths/dailyCases)
+        dailyDoctors = pd.concat(frames, join="inner").reset_index().drop(columns="index").loc[:len(proc.index)-1]["Medical doctors per 1000 people"]
+        dailyBeds = pd.concat(frames, join="inner").reset_index().drop(columns="index").loc[:len(proc.index)-1]["Hospital beds per 1000 people"]
+        dailyBeds.loc[:].replace(to_replace=0.0,value=1,inplace=True)#because some days cases were 0...
+
+        plt.plot(range(len(proc.loc[:]["Date"])),dailyDoctors/dailyBeds)
         plt.title(i)
-        plt.savefig("Graphs\\"+i+"_DailyDeaths_Div_DailyCases"+".png")
-        plt.clf()
-        '''
         plt.show()
+        '''
+        plt.clf()
+        plt.savefig("Graphs\\"+i+"_DailyDeaths_Div_DailyCases"+".png")
         '''
 
 
