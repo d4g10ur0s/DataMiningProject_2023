@@ -1,11 +1,15 @@
-
+# Graphs
+import seaborn as sn
 import matplotlib.pyplot as plt
+# Processing
 import pandas as pd
 import numpy as np
 
 import math
 
 import os
+
+from makeGraphs import graphByContinent
 
 def datasetToFolds(data):
     # shuffle data
@@ -31,38 +35,47 @@ def data_reader():
 def main():
     #1. read csv
     data = data_reader().fillna(0)
-    #2. find countries
-    countries = []
-    for i in data.iloc[:]["Entity"]:
-        if i not in countries :
-            countries.append(i)
-    #3. one dataframe for each country
+    #2. find continents and countries
+    continents = data["Continent"].unique().tolist()
+    countries = data["Entity"].unique().tolist()
+    #3. one dataframe for each country ,one entry for each continent
+    graphByContinent(continents,data)
+    '''
     df_dict = {}
+    for i in continents :
+        df_dict[i] = []
     for i in countries :
-        df_dict[i] = data.loc[:][data["Entity"]==i].reset_index().drop(columns="index")
+        temp = data.loc[:][data["Entity"]==i].reset_index().drop(columns="index")
+        df_dict[temp.loc[0]["Continent"]].append(temp)
+    '''
+    '''
     #4. plot population per day for each
-    for i in countries :
-        proc = df_dict[i]
-        dd1 = proc.loc[1:][["Deaths","Cases","Medical doctors per 1000 people","Hospital beds per 1000 people"]].reset_index().drop(columns="index")#daily deaths
-        dd2 = proc.loc[:len(proc.index)-1][["Deaths","Cases","Medical doctors per 1000 people","Hospital beds per 1000 people"]].reset_index().drop(columns="index")#daily deaths
-        frames = [pd.DataFrame(data=[proc.loc[0]]), dd1-dd2]
-        dailyDeaths = pd.concat(frames, join="inner").reset_index().drop(columns="index").loc[:len(proc.index)-1]["Deaths"]
+    for i in continents :
+        process = df_dict[i]
+        total = None
+        for proc in process :
+            dd1 = proc.loc[1:][["Deaths","Cases","Medical doctors per 1000 people","Hospital beds per 1000 people"]].reset_index().drop(columns="index")#daily deaths
+            dd2 = proc.loc[:len(proc.index)-1][["Deaths","Cases","Medical doctors per 1000 people","Hospital beds per 1000 people"]].reset_index().drop(columns="index")#daily deaths
+            frames = [pd.DataFrame(data=[proc.loc[0]]), dd1-dd2]
+            dailyDeaths = pd.concat(frames, join="inner").reset_index().drop(columns="index").loc[:len(proc.index)-1]["Deaths"]
+            dailyDeaths.clip(lower=0,inplace=True)
 
-        dailyCases = pd.concat(frames, join="inner").reset_index().drop(columns="index").loc[:len(proc.index)-1]["Cases"]
-        dailyCases.loc[:].replace(to_replace=0.0,value=1,inplace=True)#because some days cases were 0...
+            dailyCases = pd.concat(frames, join="inner").reset_index().drop(columns="index").loc[:len(proc.index)-1]["Cases"]
+            dailyCases.clip(lower=1,inplace=True)#because some days cases were 0...
 
-        dailyDoctors = pd.concat(frames, join="inner").reset_index().drop(columns="index").loc[:len(proc.index)-1]["Medical doctors per 1000 people"]
-        dailyBeds = pd.concat(frames, join="inner").reset_index().drop(columns="index").loc[:len(proc.index)-1]["Hospital beds per 1000 people"]
-        dailyBeds.loc[:].replace(to_replace=0.0,value=1,inplace=True)#because some days cases were 0...
-
-        plt.plot(range(len(proc.loc[:]["Date"])),dailyDoctors/dailyBeds)
+            dailyDoctors = pd.concat(frames, join="inner").reset_index().drop(columns="index").loc[:len(proc.index)-1]["Medical doctors per 1000 people"]
+            dailyBeds = pd.concat(frames, join="inner").reset_index().drop(columns="index").loc[:len(proc.index)-1]["Hospital beds per 1000 people"]
+            dailyBeds.loc[:].replace(to_replace=0.0,value=1,inplace=True)#because some days cases were 0...
+            try :
+                total.add(dailyCases)
+            except :
+                pass
+            finally:
+                total=dailyCases
+        #plt.legend()
+        plt.plot(range(len(proc.loc[:]["Date"])),total,label=str(proc.loc[0]["Entity"]))
         plt.title(i)
-        plt.show()
-        '''
-        plt.clf()
-        plt.savefig("Graphs\\"+i+"_DailyDeaths_Div_DailyCases"+".png")
-        '''
-
+'''
 
 if __name__ == "__main__":
     main()
