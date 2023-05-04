@@ -38,8 +38,18 @@ def main():
     #2. find continents and countries
     continents = data["Continent"].unique().tolist()
     countries = data["Entity"].unique().tolist()
+    #3. preprocess data
+    toPreprocess = data.drop(columns=["Date",
+                                         "Average temperature per year",
+                                         "Longitude",
+                                         "Latitude",
+                                         "GDP/Capita",
+                                         "Continent",
+                                         "Entity"],inplace=False)
+    #3. create statistic graphs
+    #a. graphs for continents
+    graphByContinent(continents, countries ,data)
     #3. one dataframe for each country ,one entry for each continent
-    graphByContinent(continents,data)
     '''
     df_dict = {}
     for i in continents :
@@ -47,8 +57,6 @@ def main():
     for i in countries :
         temp = data.loc[:][data["Entity"]==i].reset_index().drop(columns="index")
         df_dict[temp.loc[0]["Continent"]].append(temp)
-    '''
-    '''
     #4. plot population per day for each
     for i in continents :
         process = df_dict[i]
@@ -72,10 +80,12 @@ def main():
                 pass
             finally:
                 total=dailyCases
-        #plt.legend()
+            #plt.legend()
         plt.plot(range(len(proc.loc[:]["Date"])),total,label=str(proc.loc[0]["Entity"]))
         plt.title(i)
-'''
+        plt.savefig("Graphs\\"+i+"_DPlot"+".png")
+        plt.clf()
+    '''
 
 if __name__ == "__main__":
     main()
